@@ -1,26 +1,28 @@
-import json, argparse, Entity, csv
+import json, argparse, Entity, util
 import xml.etree.ElementTree as ET
+
 
 #
 # usage: raw_processing.py [-h] [-f FORMAT] inputfile outputfile
 
-def main():
+def main(inputfilepath,outputfilepath,format):
 
-    # Read arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("inputfile", help="Input tweet data path")
-    parser.add_argument("outputfile", help="Output tweet data path")
-    parser.add_argument("-f", "--format", action="store",
-                        help="set the format of the input data [xml/json]")
-    args = parser.parse_args()
+    return get_processed_tweets(inputfilepath,format)
+
+
+def get_processed_tweets(inputfilepath,outputfilepath = None,format = "JSON"):
 
     # Read raw data
-    if args.format == "xml":
-        tweets = readxml(args.inputfile)
+    if format == "xml":
+        tweets = readxml(inputfilepath)
     else:
-        tweets = readjson(args.inputfile)
+        tweets = readjson(inputfilepath)
 
-    save_to_file(tweets, args.outputfile)
+    if outputfilepath:
+        util.save_to_file(tweets, outputfilepath)
+
+    return tweets
+
 
 # Returns a list of tweets from json
 def readjson(inputfilepath):
@@ -42,6 +44,7 @@ def readjson(inputfilepath):
         print("error: {0}".format(e))
 
     return tweets
+
 
 # Returns a list of tweets from xml
 def readxml(inputfilepath):
@@ -67,18 +70,14 @@ def readxml(inputfilepath):
     return tweets
 
 
-def save_to_file(tweets, outputfile):
-    print("Saving to:", outputfile)
-
-    with open(outputfile, "w") as saveFile:
-        saveFile.write("id,text\n")
-        writer = csv.writer(saveFile,delimiter=",", lineterminator='\n')
-        for tw in tweets:
-
-            # Replace newline characters
-            tw.text = tw.text.replace("\r", " ").replace("\n", " ")
-
-            writer.writerow([tw.id,tw.text])
-
 if __name__ == "__main__":
-    main()
+
+    # Read arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("inputfile", help="Input tweet data path")
+    parser.add_argument("outputfile", help="Output tweet data path")
+    parser.add_argument("-f", "--format", action="store",
+                        help="set the format of the input data [xml/json]")
+    args = parser.parse_args()
+
+    main(args.inputfile,args.outputfile,args.format)
