@@ -4,9 +4,9 @@ import csv, Entity
 def save_to_file(tweets, outputfilepath):
     print("Saving to:", outputfilepath)
 
-    with open(outputfilepath, "w") as saveFile:
+    with open(outputfilepath, "w",encoding='utf-8') as saveFile:
         saveFile.write("id,text\n")
-        writer = csv.writer(saveFile,delimiter=",", lineterminator='\n')
+        writer = csv.writer(saveFile, delimiter=",", lineterminator='\n')
         for tw in tweets:
 
             # Replace newline characters
@@ -24,11 +24,11 @@ def read_from_file(inputfilepath):
     TEXT = 1
 
     tweets = []
-    with open(inputfilepath,encoding='utf-8') as inputFile:
+    with open(inputfilepath) as inputFile:
         # Skips header
         next(inputFile)
 
-        reader = csv.reader(inputFile)
+        reader = csv.reader(inputFile, delimiter=",")
         for line in reader:
             tw = Entity.Tweet()
             tw.id = line[ID]

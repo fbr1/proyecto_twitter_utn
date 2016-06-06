@@ -79,8 +79,11 @@ def filter_tweets(tweets, outputfilepath = None):
 
 
 def clean(text):
+
+    # Remove extra white spaces
+    text = " ".join(text.split())
     
-    _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.:…]+')
+    _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>¿?@\[\\\]^“_`{|},.;:…]+')
 
     # Remove url, RT, Mentions(@), "..."
     text = re.sub(r"(RT)|(@[_A-Za-z0-9]+)|(\w+:\/\S+)|(http)|(https)", "", text)
@@ -94,7 +97,7 @@ def clean(text):
         if word:            
             result.append(word)
 
-    return ' '.join(result)
+    return " ".join(result)
     
 
 def removerArtProPre(text):

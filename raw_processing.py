@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 def main(inputfilepath,outputfilepath,format):
 
-    return get_processed_tweets(inputfilepath,format)
+    return get_processed_tweets(inputfilepath,outputfilepath,format)
 
 
 def get_processed_tweets(inputfilepath,outputfilepath = None,format = "JSON"):
