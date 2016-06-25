@@ -9,17 +9,23 @@ from collections import defaultdict
 MINIMUM_FREQUENCY = 0.0005
 
 
-def main(inputfilepath, outputfilepath):
-    return filter_tweets_from_file(inputfilepath, outputfilepath)
+"""
+Parameters
+----------
+tweets : list of Entity.Tweet, required
+
+outputfilepath : string, optional, default: None
+    Location path for saving the filtered tweets
+
+art: boolean, optional, default: False
+    Remove articles, pronouns and prepositions
+
+frecuency: boolean, optional, default: False
+    Remove less used words
+"""
 
 
-def filter_tweets_from_file(inputfilepath, outputfilepath = None):
-
-    tweets = filter_tweets(util.read_from_file(inputfilepath))
-    return tweets
-
-
-def filter_tweets(tweets, outputfilepath = None):
+def filter_tweets(tweets, outputfilepath=None, art=False, frequency=False):
 
     # Clean tweets
     for i in range(len(tweets)):
@@ -33,33 +39,33 @@ def filter_tweets(tweets, outputfilepath = None):
             seen.add(tweets[i].text)
             deduped.append(tweets[i])
     tweets = deduped
-            
-    # Remove articulos,pronombres y preposiciones
-    for i in range(len(tweets)):
-        tweets[i].text = removerArtProPre(tweets[i].text)
 
-    # Remove less used words
-    # TODO review effectiveness
-    total = 0
-    d = defaultdict(int)
-    for tw in tweets:
-        for word in tw.text:
-            d[word] += 1
-            total += 1
+    if art:  # Remove articulos, pronombres y preposiciones
+        for i in range(len(tweets)):
+            tweets[i].text = " ".join(removerArtProPre(tweets[i].text))
 
-    freq_ord = [(word,count) for word, count in sorted(d.items(), key=lambda k_v: (k_v[1], k_v[0]),reverse=True)]
+    if frequency:  # Remove less used words
+        # TODO review effectiveness
+        total = 0
+        d = defaultdict(int)
+        for tw in tweets:
+            for word in tw.text:
+                d[word] += 1
+                total += 1
 
-    wordsFiltered = []
-    freqFiltered = []
+        freq_ord = [(word,count) for word, count in sorted(d.items(), key=lambda k_v: (k_v[1], k_v[0]),reverse=True)]
 
-    for i in range(len(freq_ord)):
-        if freq_ord[i][1]/total < MINIMUM_FREQUENCY:
-            wordsFiltered = [x[0] for x in freq_ord[:i]]
-            freqFiltered = [x[1] for x in freq_ord[:i]]
-            break
+        wordsFiltered = []
+        # freqFiltered = []
 
-    for i in range(len(tweets)):
-        tweets[i].text = ' '.join([x for x in tweets[i].text if x in wordsFiltered])
+        for i in range(len(freq_ord)):
+            if freq_ord[i][1]/total < MINIMUM_FREQUENCY:
+                wordsFiltered = [x[0] for x in freq_ord[:i]]
+                # freqFiltered = [x[1] for x in freq_ord[:i]] // Only necessary if it's required to know the frequency of each word
+                break
+
+        for i in range(len(tweets)):
+            tweets[i].text = ' '.join([x for x in tweets[i].text if x in wordsFiltered])
 
     # Remove empty tweets
     super_cleaned = []
@@ -120,7 +126,6 @@ def removerArtProPre(text):
                   'cuantos','cuantas','bastante','alguno','cualquiera','nadie',
                   'ninguno','otro','quienquiera']
     varios = ['y','o','es','no','va','q','x','era']
-
               
     filtro = set(preposiciones+articulos+pronombres+varios)
     
@@ -131,12 +136,27 @@ def removerArtProPre(text):
     return result
 
 
+def filter_tweets_from_file(inputfilepath, outputfilepath=None, art=False, frequency=False):
+
+    tweets = filter_tweets(util.read_from_file(inputfilepath), outputfilepath, art, frequency)
+
+    return tweets
+
+
+def main(inputfilepath, outputfilepath, art, frequency):
+    return filter_tweets_from_file(inputfilepath, outputfilepath, art, frequency)
+
+
 if __name__ == "__main__":
 
     # Read arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("inputfile", help="Input tweet data path")
     parser.add_argument("outputfile", help="Output tweet data path")
+    parser.add_argument("-a", "--art", action="store_true",
+                        help="Remove articles, pronouns and prepositions")
+    parser.add_argument("-f", "--frequency", action="store_true",
+                        help="Remove less used words")
     args = parser.parse_args()
 
-    main(args.inputfile,args.outputfile)
+    main(args.inputfile, args.outputfile, args.art, args.frequency)

@@ -5,12 +5,12 @@ import xml.etree.ElementTree as ET
 #
 # usage: raw_processing.py [-h] [-f FORMAT] inputfile outputfile
 
-def main(inputfilepath,outputfilepath,format):
+def main(inputfilepath, outputfilepath, format):
 
-    return get_processed_tweets(inputfilepath,outputfilepath,format)
+    return get_processed_tweets(inputfilepath, outputfilepath, format)
 
 
-def get_processed_tweets(inputfilepath,outputfilepath = None,format = "JSON"):
+def get_processed_tweets(inputfilepath, outputfilepath = None, format = "JSON"):
 
     # Read raw data
     if format == "xml":
