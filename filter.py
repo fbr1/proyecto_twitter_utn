@@ -61,7 +61,8 @@ def filter_tweets(tweets, outputfilepath=None, art=False, frequency=False):
         for i in range(len(freq_ord)):
             if freq_ord[i][1]/total < MINIMUM_FREQUENCY:
                 wordsFiltered = [x[0] for x in freq_ord[:i]]
-                # freqFiltered = [x[1] for x in freq_ord[:i]] // Only necessary if it's required to know the frequency of each word
+                #  Only necessary if it's required to know the frequency of each word
+                # freqFiltered = [x[1] for x in freq_ord[:i]]
                 break
 
         for i in range(len(tweets)):
