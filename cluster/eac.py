@@ -1,5 +1,9 @@
-from sklearn.cluster import MiniBatchKMeans
+import multiprocessing
+from functools import partial
+
+from sklearn.cluster import KMeans
 import numpy as np
+import copy
 
 class EAC:
     """
@@ -10,7 +14,7 @@ class EAC:
     iterations : int, optional, default: 30
         Number of iterations
 
-    clustering : class, optional, default: MiniBatchKmeans
+    clustering : class, optional, default: Kmeans
         What clustering method to use. Must be a clustering object with a callable fix method
 
     min_k : int, optional, default: 5
@@ -25,28 +29,30 @@ class EAC:
 
         self.iterations = iterations
 
-        self.clustering=clustering
+        self.clustering = clustering
 
         self.min_k = min_k
 
         self.max_k = max_k
 
+        self.co_asoc_matrix = None
+
     def _check_init_args(self):
 
         if self.clustering:
-            if not callable(self.clustering.fix):
-                km = MiniBatchKMeans(init='k-means++', n_init=1,
-                                     init_size=1000, batch_size=1000)
-                self.clustering = km
+            if not callable(self.clustering.fit):
+                raise ValueError("clustering Class needs to have a method fit callable")
         else:
-            raise ValueError("clustering Class needs to have a method fit callable")
+            km = KMeans(init='k-means++', n_init=1, max_iter=100)
+            self.clustering = km
 
     def fit(self, X):
-        """Fit EAC of selected clustering to the provided data.
+        """
+        Fit EAC of selected clustering to the provided data.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : array-like matrix, shape=(n_samples, n_features)
 
         Returns
         -------
@@ -55,31 +61,48 @@ class EAC:
 
         self._check_init_args()
 
+        # Setup Multiprocessing
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        func = partial(self.EAC_worker, X)
+
+        results = list(pool.imap_unordered(func, range(self.iterations)))
+        pool.close()
+        pool.join()
+
+        # Generate EAC distance matrix
         m, n = X.shape
+        self.distance_ = np.zeros((m, m))
 
-        co_asoc_matrix = np.zeros((m, m))
+        for partial_dist in results:
+            self.distance_ += partial_dist
 
-        for i in range(self.iterations):
-            # Choose random k value between min_k and max_k
+        self.distance_ /= self.iterations
 
-            k = np.random.randint(self.min_k, self.max_k)
+        return self
 
-            # Run clustering
+    def EAC_worker(self, X, i):
 
-            # If it's a K algorithm
-            if hasattr(self.clustering, 'n_clusters'):
-                self.clustering.n_clusters = k
+        # Choose random k value between min_k and max_k
+        k = np.random.randint(self.min_k, self.max_k)
 
-            self.clustering.fit(X)
+        # Run clustering
+        clustering = copy.deepcopy(self.clustering)
 
-            # Update co-association matrix
-            # For each cluster
-            for j in range(k):
-                cluster = np.where(self.clustering.labels_ == j)[0]
-                for row in cluster:
-                    for column in cluster:
-                        if row < column:
-                            co_asoc_matrix[row][column] += 1 / self.iterations
-                        elif row == column:
-                            co_asoc_matrix[row][column] = 1
+        # If it's a K cluster algorithm
+        if hasattr(self.clustering, 'n_clusters'):
+            clustering.n_clusters = k
 
+        clustering.fit(X)
+
+        # Update co-association matrix
+        m, n = X.shape
+        partial_dist = np.ones((m, m))
+
+        # For each cluster
+        for j in range(k):
+            cluster = np.where(clustering.labels_ == j)[0]
+            for row in cluster:
+                for column in cluster:
+                    partial_dist[row][column] = 0
+
+        return partial_dist
