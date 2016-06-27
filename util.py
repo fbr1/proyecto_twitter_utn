@@ -51,15 +51,16 @@ def precision(tweets):
     """
 
     # Get list of types and clusters
-    seen = set()
+    seentypes = set()
+    seenclusters = set()
     types = []
     clusters = []
     for tw in tweets:
-        if tw.tw_type not in seen:
-            seen.add(tw.tw_type)
+        if tw.tw_type not in seentypes:
+            seentypes.add(tw.tw_type)
             types.append(tw.tw_type)
-        if tw.label not in seen:
-            seen.add(tw.label)
+        if tw.label not in seenclusters:
+            seenclusters.add(tw.label)
             clusters.append(tw.label)
 
     # Find the cluster number better suited for each type
@@ -93,16 +94,17 @@ def precision(tweets):
         assigned_clusters[i] = cluster_number
 
     # Calculate precision
-    print('\t\t', end='')
+    separator = '\t\t\t'
+    print(separator, end='')
     for tw_type in types:
-        print(tw_type, '\t\t\t', end='')
+        print(tw_type, separator, end='')
     print('\n')
     for typeRow in range(len(types)):
-        print(types[typeRow], '\t', end='')
+        print(types[typeRow], '\t\t', end='')
         for typeCol in range(len(types)):
             total = 0
             for tw in tweets:
                 if tw.tw_type == types[typeRow] and tw.label == assigned_clusters[typeCol]:
                     total += 1
-            print(total / types_count[typeRow], '\t', end='')
+                    print('{:0.3f}'.format(total / types_count[typeRow]), separator, end='')
         print('\n')

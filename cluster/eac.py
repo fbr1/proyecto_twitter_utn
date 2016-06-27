@@ -62,12 +62,10 @@ class EAC:
         self._check_init_args()
 
         # Setup Multiprocessing
-        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        pool = multiprocessing.Pool(multiprocessing.cpu_count()-1)
         func = partial(self.EAC_worker, X)
 
-        results = list(pool.imap_unordered(func, range(self.iterations)))
-        pool.close()
-        pool.join()
+        results = pool.imap_unordered(func, range(self.iterations))
 
         # Generate EAC distance matrix
         m, n = X.shape
@@ -75,6 +73,9 @@ class EAC:
 
         for partial_dist in results:
             self.distance_ += partial_dist
+
+        pool.close()
+        pool.join()
 
         self.distance_ /= self.iterations
 
@@ -103,6 +104,6 @@ class EAC:
             cluster = np.where(clustering.labels_ == j)[0]
             for row in cluster:
                 for column in cluster:
-                    partial_dist[row][column] = 0
+                    partial_dist[row, column] = 0
 
         return partial_dist
