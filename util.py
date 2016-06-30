@@ -7,14 +7,14 @@ def save_to_file(tweets, outputfilepath):
     print("Saving to:", outputfilepath)
 
     with open(outputfilepath, "w", encoding='utf-8') as saveFile:
-        saveFile.write("id,text\n")
+        saveFile.write("id,text,type,label\n")
         writer = csv.writer(saveFile, delimiter=",", lineterminator='\n')
         for tw in tweets:
 
             # Replace newline characters
             tw.text = tw.text.replace("\r", " ").replace("\n", " ")
 
-            writer.writerow([tw.id, tw.text])
+            writer.writerow([tw.id, tw.text, tw.tw_type, tw.label])
 
 
 # TODO check for desired format : id,text only
@@ -24,9 +24,11 @@ def read_from_file(inputfilepath):
     # CSV Fields
     ID = 0
     TEXT = 1
+    TYPE = 2
+    LABEL = 3
 
     tweets = []
-    with open(inputfilepath) as inputFile:
+    with open(inputfilepath, encoding="utf8") as inputFile:
         # Skips header
         next(inputFile)
 
@@ -35,6 +37,8 @@ def read_from_file(inputfilepath):
             tw = Entity.Tweet()
             tw.id = line[ID]
             tw.text = line[TEXT]
+            tw.tw_type = line[TYPE]
+            tw.label = line[LABEL]
             tweets.append(tw)
 
     return tweets
@@ -106,5 +110,5 @@ def precision(tweets):
             for tw in tweets:
                 if tw.tw_type == types[typeRow] and tw.label == assigned_clusters[typeCol]:
                     total += 1
-                    print('{:0.3f}'.format(total / types_count[typeRow]), separator, end='')
+            print('{:0.3f}'.format(total / types_count[typeRow]), separator, end='')
         print('\n')
