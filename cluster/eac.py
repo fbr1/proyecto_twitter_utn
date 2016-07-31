@@ -5,6 +5,7 @@ from sklearn.cluster import KMeans
 import numpy as np
 import copy
 
+
 class EAC:
     """
     EAC class.
@@ -41,7 +42,7 @@ class EAC:
 
         if self.clustering:
             if not callable(self.clustering.fit):
-                raise ValueError("clustering Class needs to have a method fit callable")
+                raise ValueError("clustering Class needs to have a callable method named fit ")
         else:
             km = KMeans(init='k-means++', n_init=1, max_iter=100)
             self.clustering = km

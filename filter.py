@@ -9,23 +9,28 @@ from collections import defaultdict
 MINIMUM_FREQUENCY = 0.0005
 
 
-"""
-Parameters
-----------
-tweets : list of Entity.Tweet, required
+def filter_tweets(tweets, outputfilepath=None, art=False, frequency=False, terms_to_remove=None):
+    """
+    :param tweets: list of Entity.Tweet, required
 
-outputfilepath : string, optional, default: None
-    Location path for saving the filtered tweets
+    :param outputfilepath: string, optional, default: None
+        Location path for saving the filtered tweets
 
-art: boolean, optional, default: False
-    Remove articles, pronouns and prepositions
+    :param art: boolean, optional, default: False
+        Remove articles, pronouns and prepositions
 
-frecuency: boolean, optional, default: False
-    Remove less used words
-"""
+    :param frequency: boolean, optional, default: False,
+        Remove less used words
 
+    :param terms_to_remove: list of string, optional, default: None
+        List of terms to remove from each tweet
 
-def filter_tweets(tweets, outputfilepath=None, art=False, frequency=False):
+    :return tweets: list of tweets cleaned and filtered
+    """
+
+    if terms_to_remove:  # Remove search terms
+        for i in range(len(tweets)):
+            tweets[i].text = remove_search_terms(tweets[i].text.lower(), terms_to_remove)
 
     # Clean tweets
     for i in range(len(tweets)):
@@ -137,15 +142,43 @@ def removerArtProPre(text):
     return result
 
 
-def filter_tweets_from_file(inputfilepath, outputfilepath=None, art=False, frequency=False):
+def remove_search_terms(text, terms):
 
-    tweets = filter_tweets(util.read_from_file(inputfilepath), outputfilepath, art, frequency)
+    filtro = set(terms)
+    result = []
+    for word in text.split(' '):
+        if word not in filtro:
+            result.append(word)
+    return " ".join(result)
+
+
+def filter_tweets_from_file(inputfilepath, outputfilepath=None, art=False, frequency=False, terms_to_remove=None):
+    """
+    :param inputfilepath: string, required
+        Location path for loading the raw tweets
+
+    :param outputfilepath: string, optional, default: None
+        Location path for saving the filtered tweets
+
+    :param art: boolean, optional, default: False
+        Remove articles, pronouns and prepositions
+
+    :param frequency: boolean, optional, default: False,
+        Remove less used words
+
+    :param terms_to_remove: list of string, optional, default: None
+        List of terms to remove from each tweet
+
+    :return tweets: list of tweets cleaned and filtered
+    """
+
+    tweets = filter_tweets(util.read_from_file(inputfilepath), outputfilepath, art, frequency, terms_to_remove)
 
     return tweets
 
 
-def main(inputfilepath, outputfilepath, art, frequency):
-    return filter_tweets_from_file(inputfilepath, outputfilepath, art, frequency)
+def main(inputfilepath, outputfilepath, art, frequency, terms_to_remove):
+    return filter_tweets_from_file(inputfilepath, outputfilepath, art, frequency, terms_to_remove)
 
 
 if __name__ == "__main__":
@@ -154,10 +187,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("inputfile", help="Input tweet data path")
     parser.add_argument("outputfile", help="Output tweet data path")
+    parser.add_argument("-r", "--rt", help="List of terms to remove")
     parser.add_argument("-a", "--art", action="store_true",
                         help="Remove articles, pronouns and prepositions")
     parser.add_argument("-f", "--frequency", action="store_true",
                         help="Remove less used words")
     args = parser.parse_args()
 
-    main(args.inputfile, args.outputfile, args.art, args.frequency)
+    main(args.inputfile, args.outputfile, args.art, args.frequency, args.rst)

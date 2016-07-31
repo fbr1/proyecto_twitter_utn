@@ -96,7 +96,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # Check random state
         self.random_state_ = check_random_state(self.random_state)
 
-    def fit(self, X=None,D=None):
+    def fit(self, X):
         """Fit K-Medoids to the provided data.
 
         Parameters
@@ -111,8 +111,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         self._check_init_args()
 
-        # If no distance matrix is set
-        if X is not None:
+        if self.distance_metric == 'precomputed':
+            D = X
+        else:
             # Check that the array is good and attempt to convert it to
             # Numpy array if possible
             X = self._check_array(X)
@@ -147,9 +148,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # the training data to clusters
         self.labels_ = cluster_ics
 
-        if X is not None:
-            # Expose cluster centers, i.e. medoids
-            self.cluster_centers_ = X.take(medoid_ics, axis=0)
+        # Expose cluster centers, i.e. medoids
+        self.cluster_centers_ = X.take(medoid_ics, axis=0)
 
         # Return self to enable method chaining
         return self
