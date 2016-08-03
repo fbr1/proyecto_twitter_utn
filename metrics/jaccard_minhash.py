@@ -4,7 +4,7 @@ from datasketch.minhash import MinHash
 from functools import partial
 
 # Constants
-MAX_SLICES = 16
+MAX_SLICES = 8
 
 
 class PartialDist:
@@ -27,6 +27,17 @@ def _extract_shingles(string, shingle_length=2):
     return shingles
 
 
+def _generate_minhash_list(data, shingle_length=2):
+    minhash_list = []
+    for text in data:
+        m = MinHash()
+        for d in _extract_shingles(text, shingle_length):
+            m.update(d.encode('utf8'))
+        minhash_list.append(m)
+
+    return minhash_list
+
+
 def jaccard_minhash_distance(data, shingle_length=2):
     """
     Calculate and return the jaccard distance matrix of all data's elements.
@@ -46,16 +57,14 @@ def jaccard_minhash_distance(data, shingle_length=2):
 
     _progress(0, n)
 
+    # Pregenerating minhash objects
+    minhash_list = _generate_minhash_list(data, shingle_length)
+
     # Calculate jaccard distance in a upper triangular matrix
     for i in range(n - 1):
         for j in range(i + 1, n):
-            m1 = MinHash()
-            m2 = MinHash()
-            for d in _extract_shingles(data[i], shingle_length):
-                m1.update(d.encode('utf8'))
-            for d in _extract_shingles(data[j], shingle_length):
-                m2.update(d.encode('utf8'))
-            D[i, j] = 1 - m1.jaccard(m2)
+
+            D[i, j] = 1 - minhash_list[i].jaccard(minhash_list[j])
 
         # Report progress
         if i % increment == 0:
@@ -95,12 +104,15 @@ def jaccard_minhash_distance_mp(data, shingle_length=2):
     # Setup Multiprocessing
     pool = multiprocessing.Pool(n_processors)
 
-    func = partial(_jac_minh_worker, data, n_slices, shingle_length)
-
-    dist_list = []
-
     # Start Progress bar
     _progress(0, n_sections)
+
+    # Pregenerating minhash objects
+    minhash_list = _generate_minhash_list(data, shingle_length)
+
+    func = partial(_jac_minh_worker, minhash_list, n_slices, shingle_length)
+
+    dist_list = []
 
     # Execute jobs and store partial_dist
     for i, partial_dist in enumerate(pool.imap_unordered(func, range(n_sections))):
@@ -129,12 +141,12 @@ def jaccard_minhash_distance_mp(data, shingle_length=2):
     return D
 
 
-def _jac_minh_worker(data, n_slices, shingle_length, i):
+def _jac_minh_worker(minhash_data, n_slices, shingle_length, i):
     """
     Given n = length (data)
     Returns a submatrix of the n x n final distance matrix
 
-    :param data: list of strings
+    :param minhash_data: list of strings
     :param n_slices: int
     :param shingle_length: int
     :param i:
@@ -142,7 +154,7 @@ def _jac_minh_worker(data, n_slices, shingle_length, i):
     """
 
     # Initialization
-    n = len(data)
+    n = len(minhash_data)
     section_lenght = int(n / n_slices)
     X, Y = _get_coord_section(i+1, n_slices)
     D = np.zeros((section_lenght, section_lenght))
@@ -152,14 +164,8 @@ def _jac_minh_worker(data, n_slices, shingle_length, i):
     column = 0
     for i in range(X * section_lenght, ((X + 1) * section_lenght)):
         for j in range(Y * section_lenght, ((Y + 1) * section_lenght)):
-            m1 = MinHash()
-            m2 = MinHash()
-            for d in _extract_shingles(data[i], shingle_length):
-                m1.update(d.encode('utf8'))
-            for d in _extract_shingles(data[j], shingle_length):
-                m2.update(d.encode('utf8'))
-
-            D[row, column] = 1 - m1.jaccard(m2)
+            if i < j:
+                D[row, column] = 1 - minhash_data[i].jaccard(minhash_data[j])
 
             column += 1
         row += 1

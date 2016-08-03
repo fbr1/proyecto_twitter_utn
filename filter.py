@@ -99,6 +99,15 @@ def clean(text):
 
     # Remove url, RT, Mentions(@), "..."
     text = re.sub(r"(RT)|(@[_A-Za-z0-9]+)|(\w+:\/\S+)|(http)|(https)", "", text)
+
+    emoji_pattern = re.compile("["
+                               u"\U0001F600-\U0001F64F"  # emoticons
+                               u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                               u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                               u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                               u"\U00002600-\U000027b0"  # various
+                               "]+", flags=re.UNICODE)
+    text = emoji_pattern.sub(r'', text)  # no emoji
     
     # Remove strange characters
     result = []
