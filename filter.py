@@ -34,7 +34,7 @@ def filter_tweets(tweets, outputfilepath=None, art=False, frequency=False, terms
 
     # Clean tweets
     for i in range(len(tweets)):
-        tweets[i].text = clean(tweets[i].text)
+        tweets[i].text = clean(tweets[i].text.lower())
 
     # Remove duplicated tweets
     seen = set()
@@ -98,7 +98,7 @@ def clean(text):
     _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>¿?@\[\\\]^“_`{|},.;:…]+')
 
     # Remove url, RT, Mentions(@), "..."
-    text = re.sub(r"(RT)|(@[_A-Za-z0-9]+)|(\w+:\/\S+)|(http)|(https)", "", text)
+    text = re.sub(r"(rt)|(@[_A-Za-z0-9]+)|(\w+:\/\S+)|(http)|(https)", "", text)
 
     emoji_pattern = re.compile("["
                                u"\U0001F600-\U0001F64F"  # emoticons
